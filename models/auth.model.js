@@ -22,9 +22,15 @@ const AuthSchema = new Schema({
         required: true,
         minLength: [3, "Your Company's name cannot be less than 3!"]
     },
-    Logo:{
+    password:{
         type: String,
-        imageUrL: String,
+        trim: true,
+        required: true,
+        minLength: [8, "Password has to be more than 8 characters"]
+    },
+    logo:{
+        url: String,
+        publicId: String,
         required: true
     },
     companyMail:{
@@ -47,7 +53,7 @@ const AuthSchema = new Schema({
         required: true,
         minLength: [10, "Describe your product in more than 10 words"]
     }
-});
+}, {timestamps: true});
 
 const Auth = model('Auth', AuthSchema);
 export default Auth;
