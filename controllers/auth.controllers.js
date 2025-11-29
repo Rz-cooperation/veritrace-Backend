@@ -1,9 +1,9 @@
 import Auth from '../models/auth.model.js'
 import mongoose from 'mongoose';
-import bcrypt from bcrypt;
+import bcrypt from 'bcrypt';
 
-
-
+import uploadToCloudinary from '../utils/uploadToCloudinary.js';
+import cloudinary from '../config/cloudinary.js';
 
 
 
@@ -12,6 +12,8 @@ export const SignUp = async(req, res) => {
     session.startTransaction();
 
     const {companyName, password, logo, companyMail,  companyAddress, productDescription} = req.body;
+
+    const newCompany = {companyName, password, logo, companyMail,  companyAddress, productDescription}
 
     if(!companyName ||!password || !logo || !companyMail || !companyAddress || !productDescription){
         return res.status(400).json({message: "All fields are required!"});
@@ -26,8 +28,17 @@ export const SignUp = async(req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
+    
+    if(req.file){
+        const result = await uploadToCloudinary(req.file.buffer)
+        
+        newCompany.logo = {
+            url: result.secure_url,
+            publicId: result.public_id
+        }
+    }
     const createCompany = await Auth.create([{companyName, password:hashPassword, logo, companyMail,  companyAddress, productDescription}], {session});
-
+    
     await session.commitTransaction();
     session.endSession();
 
@@ -35,3 +46,4 @@ export const SignUp = async(req, res) => {
         message: "company created successfully"
     });
 };
+

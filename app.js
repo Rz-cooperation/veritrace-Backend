@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.json());
 
-authRouter.use('/api/v1');
+app.use('/api/v1', authRouter);
 
 app.use((err, req, res, next) => {
     consolr.error(err);
