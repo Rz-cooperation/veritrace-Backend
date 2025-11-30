@@ -4,22 +4,23 @@ const { Schema, model } = mongoose;
 const locationSchema = new Schema({
   type: {
     type: String,
-    enum: ["point"],
+    enum: ["Point"],
     required: true,
   },
   coordinates: {
     type: [Number],
     required: true,
   },
-});
+}, {_id: false});
 
 const addressSchema = new Schema({
   streetNo: String,
   addressStr: String,
+  state: String,
   country: String,
   postalCode: String,
   location: locationSchema,
-});
+}, {_id: false});
 
 const AuthSchema = new Schema(
   {

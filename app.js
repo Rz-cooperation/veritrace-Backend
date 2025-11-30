@@ -11,7 +11,7 @@ app.use(express.json());
 app.use('/api/v1', authRouter);
 
 app.use((err, req, res, next) => {
-    consolr.error(err);
+    console.error(err);
     res.status(500).json({
         message: "Something went wrong",
         err: err.message
