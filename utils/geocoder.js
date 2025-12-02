@@ -20,7 +20,7 @@ const geocoder = NodeGeocoder(options);
 
 export const getCoordinatesFromAddress = async (addressObj) => {
     const fullAddress = `${addressObj.streetNo || '' } ${addressObj.addressStr}, ${addressObj.city || ''}, ${addressObj.state} ${addressObj.country}`; 
-    //14 animat street, iju-isaga, Lagos Nigeria
+    
 
     console.log("Attempting to geocode: ", fullAddress);
 
