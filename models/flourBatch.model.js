@@ -1,27 +1,26 @@
 import mongoose from "mongoose";
-const {Schema, model} = mongoose;
-
+const{Schema, model} = mongoose;
 
 
 const flourBatchSchema = new Schema({
-    companyId: {
+    companyId:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Auth",
         required: true
     },
     flourType: {
         type: String,
-        required: true,
+        required: true
     },
-    supplier: {
-        String: true
+    supplier:{
+        type: String
     },
     batchNumber: {
         type: String,
         required: true,
         unique: true
     },
-    dateReceived:{
+    dateReceived: {
         type: Date,
         default: Date.now
     }
