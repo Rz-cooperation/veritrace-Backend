@@ -6,7 +6,7 @@ import upload  from "../middlewares/multer.js"
 const authRouter = Router();
 
 authRouter.post('/sign-up', upload.single('logo'), SignUp);
-authRouter.post('/sign-in', signIn);
+authRouter.post('/sign-in', upload.none(), signIn);
 
 
 export default authRouter;

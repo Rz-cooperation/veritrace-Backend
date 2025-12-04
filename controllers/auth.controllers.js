@@ -107,7 +107,7 @@ export const signIn = async(req, res) => {
             return res.status(400).json({message: "Incorrect password, put in the correct password!"})
         }
 
-        const token = jwt.sign({companyId: company._id, compsnyName: company.companyName}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN});
+        const token = jwt.sign({companyId: company._id, companyName: company.companyName}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN});
 
         return res.status(200).json({message: "login successful", token: token});
 
