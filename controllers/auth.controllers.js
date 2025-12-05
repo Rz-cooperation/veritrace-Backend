@@ -88,28 +88,50 @@ export const SignUp = async (req, res) => {
     });
 };
 
-export const signIn = async(req, res) => {
+export const signIn = async (req, res) => {
     await transactionWrapper(async (session) => {
-        const {companyMail, password} = req.body;
+        const { companyMail, password } = req.body;
 
-        if(!companyMail || !password){
-            return res.status(400).json({message: "Email & Password required"});
+        if (!companyMail || !password) {
+            return res.status(400).json({ message: "Email & Password required" });
         }
 
-        const company = await Auth.findOne({companyMail});
+        const company = await Auth.findOne({ companyMail });
 
-        if(!company){
-            return res.status(400).json({message: "Company already exists"});
+        if (!company) {
+            return res.status(400).json({ message: "Company already exists" });
         }
 
         const match = bcrypt.compare(password, company.password);
-        if(!match){
-            return res.status(400).json({message: "Incorrect password, put in the correct password!"})
+        if (!match) {
+            return res.status(400).json({ message: "Incorrect password, put in the correct password!" })
         }
 
-        const token = jwt.sign({companyId: company._id, companyName: company.companyName}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN});
 
-        return res.status(200).json({message: "login successful", token: token});
+
+        const token = jwt.sign({ companyId: company._id, companyName: company.companyName }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+        const getFullAddress = () => {
+            const addr = company.companyAddress;
+            if(!addr) return "No address provided"
+            return [
+                addr.streetNo,
+                addr.addressStr,
+                //addr.city,
+                addr.state,
+                addr.country
+            ].filter(Boolean).join(', ')
+        }
+        return res.status(200).json({
+            message: "login successful", token: token, company: {
+                _id: company._id,
+                name: company.companyName,
+                mail: company.companyMail,
+                address: getFullAddress(),
+                description: company.productDescription,
+                logo: company.logo
+            }
+        });
 
     });
 }

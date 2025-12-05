@@ -25,6 +25,8 @@ export const getDashboardStats = async (req, res) => {
     });
 };
 
+
+//creating the flouer batch it takes flourType, supplier, batchnumber
 export const createFlourBatch = async (req, res) => {
     await transactionWrapper(async (session) => {
 
