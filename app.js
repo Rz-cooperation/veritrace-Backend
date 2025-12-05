@@ -3,12 +3,19 @@ import { PORT } from './config/env.js';
 import {databaseConnection} from './database/mongoDB.js'
 import authRouter from './routes/auth.route.js';
 import companyRouter from './routes/company.route.js'
+import cors from "cors";
 
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: false,
+    allowedHeaders: ["Content-type", "Authorization"]
+}));
 
 
 app.use('/api/v1', authRouter);

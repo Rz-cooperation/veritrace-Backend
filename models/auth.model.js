@@ -16,6 +16,7 @@ const locationSchema = new Schema({
 const addressSchema = new Schema({
   streetNo: String,
   addressStr: String,
+  // city: String,
   state: String,
   country: String,
   postalCode: String,

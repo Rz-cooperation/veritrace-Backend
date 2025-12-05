@@ -117,7 +117,7 @@ export const signIn = async (req, res) => {
             return [
                 addr.streetNo,
                 addr.addressStr,
-                //addr.city,
+                // addr.city,
                 addr.state,
                 addr.country
             ].filter(Boolean).join(', ')
@@ -129,7 +129,7 @@ export const signIn = async (req, res) => {
                 mail: company.companyMail,
                 address: getFullAddress(),
                 description: company.productDescription,
-                logo: company.logo
+                logo: company.logo.url
             }
         });
 
