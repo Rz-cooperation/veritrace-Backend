@@ -104,7 +104,7 @@ export const signIn = async (req, res) => {
 
         const match = bcrypt.compare(password, company.password);
         if (!match) {
-            return res.status(400).json({ message: "Incorrect password, put in the correct password!" })
+            return res.status(400).json({success: true, message: "Incorrect password, put in the correct password!" })
         }
 
 
@@ -122,7 +122,7 @@ export const signIn = async (req, res) => {
                 addr.country
             ].filter(Boolean).join(', ')
         }
-        return res.status(200).json({
+        return res.status(200).json({success: true,
             message: "login successful", token: token, company: {
                 _id: company._id,
                 name: company.companyName,
