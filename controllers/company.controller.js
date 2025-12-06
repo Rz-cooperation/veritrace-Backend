@@ -62,7 +62,8 @@ export const getFlourBatches = async (req, res) => {
     const allFlourBatches = batches.map((theFlourBatchInfo) => ({
             flourType: theFlourBatchInfo.flourType,
             supplier: theFlourBatchInfo.supplier,
-            batchNumber: theFlourBatchInfo.batchNumber
+            batchNumber: theFlourBatchInfo.batchNumber,
+            date: theFlourBatchInfo.dateReceived
     }))
     return res.status(200).json({success: true, message: "flour batch gotten succesfully", data: allFlourBatches});
 }
