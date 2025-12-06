@@ -49,7 +49,7 @@ export const createFlourBatch = async (req, res) => {
 
         return res
             .status(201)
-            .json({success: true, message: "Flour Batch created successfully", batch: theFlourBatch });
+            .json({success: true, message: "Flour Batch created successfully", data: theFlourBatch });
     });
 };
 
@@ -64,7 +64,7 @@ export const getFlourBatches = async (req, res) => {
             supplier: theFlourBatchInfo.supplier,
             batchNumber: theFlourBatchInfo.batchNumber
     }))
-    return res.status(200).json({success: true, message: "flour batch gotten succesfully", batch: allFlourBatches});
+    return res.status(200).json({success: true, message: "flour batch gotten succesfully", data: allFlourBatches});
 }
 
 

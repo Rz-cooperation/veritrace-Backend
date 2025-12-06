@@ -104,7 +104,7 @@ export const signIn = async (req, res) => {
 
         const match = bcrypt.compare(password, company.password);
         if (!match) {
-            return res.status(400).json({success: true, message: "Incorrect password, put in the correct password!" })
+            return res.status(400).json({ message: "Incorrect password, put in the correct password!" })
         }
 
 
