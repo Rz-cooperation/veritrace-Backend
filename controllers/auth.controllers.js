@@ -99,10 +99,10 @@ export const signIn = async (req, res) => {
         const company = await Auth.findOne({ companyMail });
 
         if (!company) {
-            return res.status(400).json({ message: "Company already exists" });
+            return res.status(400).json({ message: "Company does not exist" });
         }
 
-        const match = bcrypt.compare(password, company.password);
+        const match = await bcrypt.compare(password, company.password);
         if (!match) {
             return res.status(400).json({ message: "Incorrect password, put in the correct password!" })
         }
