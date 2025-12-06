@@ -53,5 +53,19 @@ export const createFlourBatch = async (req, res) => {
     });
 };
 
+//getting flour batches for each company
+export const getFlourBatches = async (req, res) => {
+    const companyId = req.auth.companyId;
+
+    const batches = await FlourBatch.find({companyId: companyId});
+
+    const allFlourBatches = batches.map((theFlourBatchInfo) => ({
+            flourType: theFlourBatchInfo.flourType,
+            supplier: theFlourBatchInfo.supplier,
+            batchNumber: theFlourBatchInfo.batchNumber
+    }))
+    return res.status(200).json({message: "flour batch gotten succesfully", batch: allFlourBatches});
+}
+
 
 
