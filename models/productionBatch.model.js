@@ -26,7 +26,10 @@ const productionBatchSchema = new Schema({
         type: String,
         required: true,
         unique: true
-    }
+    },
+    qrCode:{
+        type: String,
+    },
 }, {timestamps: true});
 
 

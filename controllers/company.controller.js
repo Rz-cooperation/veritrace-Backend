@@ -2,6 +2,7 @@ import Scan from "../models/qrScan.model.js";
 import ProductionBatch from "../models/productionBatch.model.js";
 import FlourBatch from "../models/flourBatch.model.js";
 import {transactionWrapper} from "../utils/transactionWrapper.js"
+import QRCode from "qrcode"
 
 export const getDashboardStats = async (req, res) => {
     const companyId = req.auth._id;
@@ -115,7 +116,37 @@ export const getProductionBatches = async(req, res) => {
 }
 
 export const generateQR = async(req, res) => {
+    await transactionWrapper(async(session) => {
+        const {id} = req.params;
 
+        // Find the production batch
+        const batch = await ProductionBatch.findById(id).session(session);
+        if(!batch){
+            return res.status(404).json({message: "Batch not found"});
+        }
+
+        //Build QR Payload...
+        const qrPayload = JSON.stringify({
+            batchId: batch._id,
+            flourBatchId: batch.flourBatchId,
+            timestamp: batch.createdAt,
+            companyId: batch.company
+        });
+
+        //Generate QR BAse64 Data URL, this creates a string starting with "data:image/png;base64...."
+        const qrCodeDataUrl = await QRCode.toDataURL(qrPayload);
+
+        //Save QR link to ProductionBatch
+        batch.qrCode = qrCodeDataUrl;
+        await batch.save();
+
+        //Return QR to frontend here
+        return res.status(200).json({
+            message: "QR Code generated successfully",
+            qrCode: qrCodeDataUrl, //Frontend can put this directly into <img src={qrCode} />
+            batchId: batch._id
+        });
+    })
 }
 
 export const incrementScanCount = async(req, res) => {
