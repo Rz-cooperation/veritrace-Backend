@@ -14,8 +14,12 @@ const productionBatchSchema = new Schema({
         ref: "FlourBatch",
         required: true,
     },
-    bakingTime:{
-        type: Number,
+    bakingStartTime:{
+        type: Date,
+        required: true
+    },
+    bakingEndTime:{
+        type: Date,
         required: true
     },
     ovenTemp:{
@@ -25,11 +29,19 @@ const productionBatchSchema = new Schema({
     batchNumber:{
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        match: [/^BATCH-\d+$/, "Batch number must be in the format 'BATCH-XXX' (e.g., BATCH-202)"],
+        uppercase: true
     },
     qrCode:{
         type: String,
     },
+    quantityProduced: {
+        type: Number,
+        required: true,
+        min: [1, "Quantity must be at least 1"],
+        default: 1
+    }
 }, {timestamps: true});
 
 

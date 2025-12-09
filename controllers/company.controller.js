@@ -3,6 +3,7 @@ import ProductionBatch from "../models/productionBatch.model.js";
 import FlourBatch from "../models/flourBatch.model.js";
 import {transactionWrapper} from "../utils/transactionWrapper.js"
 import QRCode from "qrcode"
+import { populate } from "dotenv";
 
 export const getDashboardStats = async (req, res) => {
     const companyId = req.auth._id;
@@ -70,6 +71,19 @@ export const getFlourBatches = async (req, res) => {
     return res.status(200).json({success: true, message: "flour batch gotten succesfully", data: allFlourBatches});
 }
 
+//The idea is the date, will always be today's date, that cannot change only the time.
+
+
+//Helper function that combines today with the time string...
+const createTimeDate = (time) => {
+    if(!time) return null;
+    const today = new Date();
+    const [hours, minutes] = time.split(':'); //splites 01:19 into [01: 19] for user input.
+    today.setHours(parseInt(hours), parseInt(minutes), 0, 0); //This sets the time on today's date, "parseInt" is so it can be inputed as an integer...
+    return today;
+}
+
+
 
 
 export const createProductionBatch = async(req, res) => {
@@ -77,28 +91,33 @@ export const createProductionBatch = async(req, res) => {
     await transactionWrapper(async(session) => {
         
         
-        const { flourBatchId, bakingTime, ovenTemp, batchNumber} = req.body;
+        const { flourBatchId, bakingStartTime, bakingEndTime, ovenTemp, batchNumber, quantityProduced} = req.body;
 
-        if(!flourBatchId || !bakingTime || !ovenTemp || !batchNumber){
+        if(!flourBatchId || !bakingStartTime || !bakingEndTime|| !ovenTemp || !batchNumber ||!quantityProduced){
             return res.status(401).json({message: "Please fill all fields"});
         }
 
         const companyId = req.auth.companyId;
 
-        if(batchNumber){
-            return res.status(400).json({message: "Batch number already exists"});
+        const startTime = createTimeDate(bakingStartTime);
+        const endTime = createTimeDate(bakingEndTime);
+
+        if(!startTime || !endTime){
+            return res.status(400).json({message: "Please provide vaild start and end times (HH:MM)"});
         }
 
         const theProductionBatch = await ProductionBatch.create([{
             companyId: companyId,
             flourBatchId: flourBatchId,
-            bakingTime: bakingTime,
+            bakingStartTime: startTime,
+            bakingEndTime: endTime,
             ovenTemp: ovenTemp,
-            batchNumber: batchNumber
+            batchNumber: batchNumber,
+            quantityProduced: quantityProduced || 1
         }], {session});
 
         return res.status(201).json({message: "production batch created successfully", data: theProductionBatch});
-    })
+    });
 }
 
 export const getProductionBatches = async(req, res) => {
@@ -109,7 +128,8 @@ export const getProductionBatches = async(req, res) => {
     const allProductionBatches = productionBatches.map((theProductionBatchInfo) => ({
         id: theProductionBatchInfo._id,
         flourBatchId: theProductionBatchInfo.flourBatchId,
-        bakingTime: theProductionBatchInfo.bakingTime,
+        bakingStartTime: theProductionBatchInfo.bakingStartTime,
+        bakingEndTime: theProductionBatchInfo.bakingEndTime,
         ovenTemp: theProductionBatchInfo.ovenTemp,
         batchNumber: theProductionBatchInfo.batchNumber
     }));
@@ -121,11 +141,15 @@ export const generateQR = async(req, res) => {
     await transactionWrapper(async(session) => {
         const {id} = req.params;
 
-        // Find the production batch
-        const batch = await ProductionBatch.findById(id).session(session);
+        // Find the production batch 
+        const batch = await ProductionBatch.findById(id).populate("flourBatchId").session(session);
+
         if(!batch){
             return res.status(404).json({message: "Batch not found"});
         }
+
+        const batchNo = batch.batchNumber;
+        // const time = batch.
 
         //Build QR Payload...
         const qrPayload = JSON.stringify({
