@@ -61,6 +61,7 @@ export const getFlourBatches = async (req, res) => {
     const batches = await FlourBatch.find({companyId: companyId});
 
     const allFlourBatches = batches.map((theFlourBatchInfo) => ({
+            id: theFlourBatchInfo._id,
             flourType: theFlourBatchInfo.flourType,
             supplier: theFlourBatchInfo.supplier,
             batchNumber: theFlourBatchInfo.batchNumber,
@@ -106,6 +107,7 @@ export const getProductionBatches = async(req, res) => {
     const productionBatches = await ProductionBatch.find({companyId: companyId}).populate("flourBatchId", "batchNumber supplier flourType")
 
     const allProductionBatches = productionBatches.map((theProductionBatchInfo) => ({
+        id: theProductionBatchInfo._id,
         flourBatchId: theProductionBatchInfo.flourBatchId,
         bakingTime: theProductionBatchInfo.bakingTime,
         ovenTemp: theProductionBatchInfo.ovenTemp,
