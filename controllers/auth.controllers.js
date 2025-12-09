@@ -104,11 +104,8 @@ export const signIn = async (req, res) => {
 
         const match = await bcrypt.compare(password, company.password);
         if (!match) {
-            return res.status(400).json({ message: "Incorrect password, put in the correct password!" })
+            return res.status(400).json({ message: "Invalid Email or Password!" })
         }
-
-
-
         const token = jwt.sign({ companyId: company._id, companyName: company.companyName }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         const getFullAddress = () => {
@@ -117,7 +114,6 @@ export const signIn = async (req, res) => {
             return [
                 addr.streetNo,
                 addr.addressStr,
-                // addr.city,
                 addr.state,
                 addr.country
             ].filter(Boolean).join(', ')
@@ -135,3 +131,4 @@ export const signIn = async (req, res) => {
 
     });
 }
+

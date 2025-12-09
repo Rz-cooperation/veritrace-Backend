@@ -70,3 +70,67 @@ export const getFlourBatches = async (req, res) => {
 
 
 
+export const createProductionBatch = async(req, res) => {
+
+    await transactionWrapper(async(session) => {
+        
+        
+        const { flourBatchId, bakingTime, ovenTemp, batchNumber} = req.body;
+
+        if(!flourBatchId || !bakingTime || !ovenTemp || !batchNumber){
+            return res.status(401).json({message: "Please fill all fields"});
+        }
+
+        const companyId = req.auth.companyId;
+
+        if(batchNumber){
+            return res.status(400).json({message: "Batch number already exists"});
+        }
+
+        const theProductionBatch = await ProductionBatch.create([{
+            companyId: companyId,
+            flourBatchId: flourBatchId,
+            bakingTime: bakingTime,
+            ovenTemp: ovenTemp,
+            batchNumber: batchNumber
+        }], {session});
+
+        return res.status(201).json({message: "production batch created successfully", data: theProductionBatch});
+    })
+}
+
+export const getProductionBatches = async(req, res) => {
+    const companyId = req.auth.companyId;
+
+    const productionBatches = await ProductionBatch.find({companyId: companyId}).populate("flourBatchId", "batchNumber supplier flourType")
+
+    const allProductionBatches = productionBatches.map((theProductionBatchInfo) => ({
+        flourBatchId: theProductionBatchInfo.flourBatchId,
+        bakingTime: theProductionBatchInfo.bakingTime,
+        ovenTemp: theProductionBatchInfo.ovenTemp,
+        batchNumber: theProductionBatchInfo.batchNumber
+    }));
+
+    return res.status(200).json({message: "Production batches retrieved", data: allProductionBatches});
+}
+
+export const generateQR = async(req, res) => {
+
+}
+
+export const incrementScanCount = async(req, res) => {
+
+}
+
+export const getScanStats = async(req, res) => {
+
+}
+
+export const getFraudAlerts = async(req, res) => {
+
+}
+
+export const getActivityLogs = async(req, res) => {
+
+}
+
