@@ -16,6 +16,7 @@ companyRouter.get("/analytics/:batchId", verifyToken, getScanStats);
 companyRouter.get("/fraud-alerts", verifyToken, getFraudAlerts);
 companyRouter.get("/scan-analytics", verifyToken, getScanAnalytics);
 companyRouter.get("/activity-logs", verifyToken, getActivityLogs);
+companyRouter.post("/logout", verifyToken, logout);
 
 
 export default companyRouter;
