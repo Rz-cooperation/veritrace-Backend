@@ -7,9 +7,6 @@ import { getCoordinatesFromAddress } from "../utils/geocoder.js";
 import jwt from "jsonwebtoken";
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/env.js";
 
-
-
-
 export const SignUp = async (req, res) => {
     await transactionWrapper(async (session) => {
         const {
@@ -19,7 +16,6 @@ export const SignUp = async (req, res) => {
             companyAddress,
             productDescription,
         } = req.body;
-
 
         if (
             !companyName ||
@@ -51,7 +47,9 @@ export const SignUp = async (req, res) => {
                 //Attaches the result to the address object
                 companyAddress.location = locationPoint;
             } catch (geoError) {
-                return res.status(400).json({ message: geoError.message || "Invalid Address" })
+                return res
+                    .status(400)
+                    .json({ message: geoError.message || "Invalid Address" });
             }
         }
 
@@ -63,7 +61,7 @@ export const SignUp = async (req, res) => {
             password: hashPassword,
             companyMail,
             companyAddress,
-            productDescription
+            productDescription,
         };
 
         if (req.file) {
@@ -74,16 +72,11 @@ export const SignUp = async (req, res) => {
                 publicId: result.public_id,
             };
         }
-        const createCompany = await Auth.create(
-            [
-                newCompanyData
-            ],
-            { session }
-        );
+        const createCompany = await Auth.create([newCompanyData], { session });
 
         return res.status(201).json({
             message: "company created successfully",
-            company: createCompany[0]
+            company: createCompany[0],
         });
     });
 };
@@ -104,31 +97,33 @@ export const signIn = async (req, res) => {
 
         const match = await bcrypt.compare(password, company.password);
         if (!match) {
-            return res.status(400).json({ message: "Invalid Email or Password!" })
+            return res.status(400).json({ message: "Invalid Email or Password!" });
         }
-        const token = jwt.sign({ companyId: company._id, companyName: company.companyName }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign(
+            { companyId: company._id, companyName: company.companyName },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES_IN }
+        );
 
         const getFullAddress = () => {
             const addr = company.companyAddress;
-            if(!addr) return "No address provided"
-            return [
-                addr.streetNo,
-                addr.addressStr,
-                addr.state,
-                addr.country
-            ].filter(Boolean).join(', ')
-        }
-        return res.status(200).json({success: true,
-            message: "login successful", token: token, company: {
+            if (!addr) return "No address provided";
+            return [addr.streetNo, addr.addressStr, addr.state, addr.country]
+                .filter(Boolean)
+                .join(", ");
+        };
+        return res.status(200).json({
+            success: true,
+            message: "login successful",
+            token: token,
+            company: {
                 _id: company._id,
                 name: company.companyName,
                 mail: company.companyMail,
                 address: getFullAddress(),
                 description: company.productDescription,
-                logo: company.logo.url
-            }
+                logo: company.logo.url,
+            },
         });
-
     });
-}
-
+};

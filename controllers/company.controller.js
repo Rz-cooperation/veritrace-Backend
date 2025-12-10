@@ -3,6 +3,7 @@ import ProductionBatch from "../models/productionBatch.model.js";
 import FlourBatch from "../models/flourBatch.model.js";
 import { transactionWrapper } from "../utils/transactionWrapper.js"
 import FraudAlert from "../models/fraudAlert.model.js";
+import { logActivity } from "./activity.controller.js";
 import QRCode from "qrcode"
 
 
@@ -49,6 +50,12 @@ export const createFlourBatch = async (req, res) => {
             supplier,
             batchNumber
         }], { session });
+
+        await logActivity(
+            req.auth.companyId,
+            "CREATED_FLOUR_BATCH",
+            `Added flour batch:  ${theFlourBatch.batchNumber}`
+        )
 
         return res
             .status(201)
@@ -119,6 +126,13 @@ export const createProductionBatch = async (req, res) => {
 
         await theProductionBatch.save({ session });
 
+        await logActivity(
+            companyId,
+            "CREATED_PRODUCTION_BATCH",
+            `Started baking batch ${theProductionBatch.batchNumber}`,
+            {quantity: theProductionBatch.quantityProduced, ovenTemp: theProductionBatch.ovenTemp}
+        );
+
         try {// pass the *first* item since .create returns an array when used with []
             runFraudChecks(theProductionBatch, companyId, theProductionBatch._id);
         } catch (fraudError) {
@@ -181,6 +195,12 @@ export const generateQR = async (req, res) => {
         //Save QR link to ProductionBatch
         batch.qrCode = qrCodeDataUrl;
         await batch.save();
+
+        logActivity(
+            batch.company,
+            "GENERATE_QR",
+            `Generated QR code for batch ${batch.batchNumber}`
+        );
 
         //Return QR to frontend here
         return res.status(200).json({
@@ -376,8 +396,4 @@ export const getFraudAlerts = async (req, res) => {
 
 
 
-
-export const getActivityLogs = async (req, res) => {
-
-}
 
