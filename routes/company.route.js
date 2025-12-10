@@ -1,5 +1,5 @@
-import {getDashboardStats, createFlourBatch, getFlourBatches, createProductionBatch, getProductionBatches, generateQR, getScanStats, getFraudAlerts, getScanAnalytics} from "../controllers/company.controller.js"
-import {getActivityLogs} from "../controllers/activity.controller.js"
+import {getDashboardStats, createFlourBatch, getFlourBatches, createProductionBatch, getProductionBatches, generateQR, getScanStats, getFraudAlerts, getScanAnalytics, getBatchQRCodes} from "../controllers/company.controller.js"
+import {getActivityLogs, logout } from "../controllers/activity.controller.js"
 import {verifyToken} from "../middlewares/auth.middleware.js"
 import {Router} from "express";
 
@@ -17,6 +17,7 @@ companyRouter.get("/fraud-alerts", verifyToken, getFraudAlerts);
 companyRouter.get("/scan-analytics", verifyToken, getScanAnalytics);
 companyRouter.get("/activity-logs", verifyToken, getActivityLogs);
 companyRouter.post("/logout", verifyToken, logout);
+companyRouter.get("/qr-codes", verifyToken, getBatchQRCodes)
 
 
 export default companyRouter;

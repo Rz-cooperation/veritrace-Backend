@@ -3,7 +3,7 @@ const {Schema, model} = mongoose;
 
 
 
-const BlackSchemaList = new Schema({
+const BlacklistSchema = new Schema({
     token: {
         type: String,
         required: true,

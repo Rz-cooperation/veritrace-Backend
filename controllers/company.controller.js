@@ -130,7 +130,7 @@ export const createProductionBatch = async (req, res) => {
             companyId,
             "CREATED_PRODUCTION_BATCH",
             `Started baking batch ${theProductionBatch.batchNumber}`,
-            {quantity: theProductionBatch.quantityProduced, ovenTemp: theProductionBatch.ovenTemp}
+            { quantity: theProductionBatch.quantityProduced, ovenTemp: theProductionBatch.ovenTemp }
         );
 
         try {// pass the *first* item since .create returns an array when used with []
@@ -392,6 +392,22 @@ export const getFraudAlerts = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ message: "Error getting alerts", error: error.message });
     }
+};
+
+
+export const getBatchQRCodes = async (req, res) => {
+        const companyId = req.auth.companyId;
+
+        // Fetch all batches for this company
+        const qrList = await ProductionBatch.find({ companyId })
+            // Select only the data needed for the QR Card/List
+            .select("batchNumber qrCode createdAt bakingEndTime")
+            .sort({ createdAt: -1 }); // Newest batches first
+
+        return res.status(200).json({
+            message: "QR Codes retrieved successfully",
+            data: qrList
+        });
 };
 
 
