@@ -117,11 +117,11 @@ export const createProductionBatch = async (req, res) => {
             quantityProduced: quantityProduced || 1
         });
 
-        await theProductionBatch.save({session});
+        await theProductionBatch.save({ session });
 
-        try{// pass the *first* item since .create returns an array when used with []
-        runFraudChecks(theProductionBatch, companyId, theProductionBatch._id);
-        } catch(fraudError){
+        try {// pass the *first* item since .create returns an array when used with []
+            runFraudChecks(theProductionBatch, companyId, theProductionBatch._id);
+        } catch (fraudError) {
             console.error("Fraud check failed (non-critical):", fraudError);
         }
         return res.status(201).json({ message: "production batch created successfully", data: theProductionBatch });
@@ -230,50 +230,130 @@ export const getScanStats = async (req, res) => {
     });
 }
 
-    // --- HELPER: The Fraud Logic ---
-    // You call this inside your 'createProductionBatch' controller
-    export const runFraudChecks = async (batchData, companyId, batchId) => {
-        const alerts = [];
 
-        // Rule 2: Is baking time reasonable? (< 12 hours)
-        // We calculate difference in milliseconds, then convert to hours
-        const durationMs = new Date(batchData.bakingEndTime) - new Date(batchData.bakingStartTime);
-        const durationHours = durationMs / (1000 * 60 * 60);
+export const getScanAnalytics = async (req, res) => {
+    try {
+        const companyId = req.auth.companyId;
 
-        if (durationHours > 12) {
-            alerts.push({
-                companyId,
-                batchId,
-                severity: "MEDIUM",
-                message: `Unusual baking duration: ${durationHours.toFixed(1)} hours. Standard is < 12 hours.`
-            });
-        } else if (durationHours < 0) {
-            alerts.push({
-                companyId,
-                batchId,
-                severity: "HIGH",
-                message: `Impossible time: Baking ended before it started.`
-            });
-        }
+        //Get Start of Today (for "Total Scans Today")
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
 
-        // Rule 3: Oven temperature in range? (Standard bread: 180C - 260C)
-        // We assume anything below 100C or above 300C is likely fake data
-        const temp = batchData.ovenTemp;
-        if (temp < 100 || temp > 300) {
-            alerts.push({
-                companyId,
-                batchId,
-                severity: "HIGH",
-                message: `Extreme oven temperature detected: ${temp}°C.`
-            });
-        }
+        // Run the Aggregation
+        // This looks complex, but it's just asking the DB to do the math for us
+        const stats = await Scan.aggregate([
+            // Step A: Find scans belonging to this company's batches
+            // (We need to join with ProductionBatch first to filter by companyId)
+            {
+                $lookup: {
+                    from: "productionbatches", // ensure this matches your collection name (usually lowercase plural)
+                    localField: "batchId",
+                    foreignField: "_id",
+                    as: "batchDetails"
+                }
+            },
+            { $unwind: "$batchDetails" }, // Unpack the array
+            { $match: { "batchDetails.companyId": companyId } }, // Filter by logged-in company
 
-        // Save alerts to DB if any found
-        if (alerts.length > 0) {
-            await FraudAlert.insertMany(alerts);
-            console.log(`Generated ${alerts.length} fraud alerts.`);
-        }
-    };
+            // Group by Batch to get table data
+            {
+                $group: {
+                    _id: "$batchId",
+                    batchNumber: { $first: "$batchDetails.batchNumber" },
+                    totalScans: { $sum: 1 },
+                    lastScan: { $max: "$createdAt" },
+                    scansToday: {
+                        $sum: {
+                            $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0]
+                        }
+                    }
+                }
+            },
+
+            // Sort by most scanned first
+            { $sort: { totalScans: -1 } }
+        ]);
+
+        // Calculate Summary Cards from the result
+        const totalScansAllTime = stats.reduce((acc, item) => acc + item.totalScans, 0);
+        const totalScansToday = stats.reduce((acc, item) => acc + item.scansToday, 0);
+        const uniqueBatches = stats.length;
+
+        // Average Scans per Batch
+        const avgScans = uniqueBatches > 0 ? Math.round(totalScansAllTime / uniqueBatches) : 0;
+
+        // Most Scanned Batch
+        const mostScanned = stats.length > 0 ? stats[0].batchNumber : "N/A";
+
+        //Format the Table Data
+        const tableData = stats.map(item => ({
+            batchId: item.batchNumber, // The dashboard shows "PB-2001"
+            totalScans: item.totalScans,
+            lastScan: item.lastScan
+        }));
+
+        return res.status(200).json({
+            message: "Analytics retrieved",
+            data: {
+                summary: {
+                    totalScansToday,
+                    mostScannedBatch: mostScanned,
+                    avgScansPerBatch: avgScans
+                },
+                tableData
+            }
+        });
+
+    } catch (error) {
+        console.error("Analytics Error:", error);
+        return res.status(500).json({ message: "Error getting analytics", error: error.message });
+    }
+};
+
+// --- HELPER: The Fraud Logic ---
+// You call this inside your 'createProductionBatch' controller
+export const runFraudChecks = async (batchData, companyId, batchId) => {
+    const alerts = [];
+
+    // Rule 2: Is baking time reasonable? (< 12 hours)
+    // We calculate difference in milliseconds, then convert to hours
+    const durationMs = new Date(batchData.bakingEndTime) - new Date(batchData.bakingStartTime);
+    const durationHours = durationMs / (1000 * 60 * 60);
+
+    if (durationHours > 12) {
+        alerts.push({
+            companyId,
+            batchId,
+            severity: "MEDIUM",
+            message: `Unusual baking duration: ${durationHours.toFixed(1)} hours. Standard is < 12 hours.`
+        });
+    } else if (durationHours < 0) {
+        alerts.push({
+            companyId,
+            batchId,
+            severity: "HIGH",
+            message: `Impossible time: Baking ended before it started.`
+        });
+    }
+
+    // Rule 3: Oven temperature in range? (Standard bread: 180C - 260C)
+    // We assume anything below 100C or above 300C is likely fake data
+    const temp = batchData.ovenTemp;
+    if (temp < 100 || temp > 300) {
+        alerts.push({
+            companyId,
+            batchId,
+            severity: "HIGH",
+            message: `Extreme oven temperature detected: ${temp}°C.`
+        });
+    }
+
+    // Save alerts to DB if any found
+    if (alerts.length > 0) {
+        await FraudAlert.insertMany(alerts);
+        console.log(`Generated ${alerts.length} fraud alerts.`);
+    }
+};
 
 
 export const getFraudAlerts = async (req, res) => {
