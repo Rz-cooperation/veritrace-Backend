@@ -3,6 +3,7 @@ import { PORT } from './config/env.js';
 import {databaseConnection} from './database/mongoDB.js'
 import authRouter from './routes/auth.route.js';
 import companyRouter from './routes/company.route.js'
+import publicRoute from './routes/public.route.js';
 import cors from "cors";
 
 
@@ -20,6 +21,7 @@ app.use(cors({
 
 app.use('/api/v1', authRouter);
 app.use('/api/v1/company', companyRouter);
+app.use('/api/v1', publicRoute)
 
 app.use((err, req, res, next) => {
     console.error(err);
