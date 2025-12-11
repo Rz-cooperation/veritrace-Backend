@@ -171,7 +171,10 @@ export const generateQR = async (req, res) => {
         }
 
         const batchNo = batch.batchNumber;
-        const time = batch.bakingEndTime;
+
+        const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+        const time = new Date(batch.bakingEndTime).toLocaleTimeString('en-US', timeOptions);
+
 
         const dateOptions = { weekday: 'long' };
         const day = new Date(batch.createdAt).toLocaleDateString('en-US', dateOptions);
@@ -181,20 +184,12 @@ export const generateQR = async (req, res) => {
 
         const qrPayload = `batchno: ${batchNo}, baked on ${day} at ${time} using ${supplier} ${flourType}`;
 
-        // //Build QR Payload...
-        // const qrPayload = JSON.stringify({
-        //     batchId: batch._id,
-        //     flourBatchId: batch.flourBatchId,
-        //     timestamp: batch.createdAt,
-        //     companyId: batch.company
-        // });
-
         //Generate QR BAse64 Data URL, this creates a string starting with "data:image/png;base64...."
         const qrCodeDataUrl = await QRCode.toDataURL(qrPayload);
 
         //Save QR link to ProductionBatch
         batch.qrCode = qrCodeDataUrl;
-        await batch.save();
+        await batch.save({session});
 
         logActivity(
             batch.company,

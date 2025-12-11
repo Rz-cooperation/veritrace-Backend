@@ -1,7 +1,6 @@
 import Auth from "../models/auth.model.js";
 import bcrypt, { hashSync } from "bcrypt";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
-import cloudinary from "../config/cloudinary.js";
 import { transactionWrapper } from "../utils/transactionWrapper.js";
 import jwt from "jsonwebtoken";
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/env.js";
