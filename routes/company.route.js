@@ -22,5 +22,4 @@ companyRouter.delete("/flour-batch/:id", verifyToken, deleteFlourBatch);
 companyRouter.delete("/production-batch/:id", verifyToken, deleteProductionBatch );
 companyRouter.delete("/fraud-alert/:id", verifyToken, deleteFraudAlert);
 
-
 export default companyRouter;

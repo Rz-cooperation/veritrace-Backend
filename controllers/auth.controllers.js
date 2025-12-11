@@ -3,7 +3,6 @@ import bcrypt, { hashSync } from "bcrypt";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 import cloudinary from "../config/cloudinary.js";
 import { transactionWrapper } from "../utils/transactionWrapper.js";
-import { getCoordinatesFromAddress } from "../utils/geocoder.js";
 import jwt from "jsonwebtoken";
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/env.js";
 import ActivityLogs from "../models/activityLogs.model.js";
@@ -17,7 +16,11 @@ export const SignUp = async (req, res) => {
             companyName,
             password,
             companyMail,
-            companyAddress,
+            streetNo,
+            addressStr,
+            state,
+            country,
+            postalCode,
             productDescription,
         } = req.body;
 
@@ -25,14 +28,14 @@ export const SignUp = async (req, res) => {
             !companyName ||
             !password ||
             !companyMail ||
-            !companyAddress ||
+            !streetNo ||
+            !addressStr ||
+            !state ||
+            !country ||
+            !postalCode ||
             !productDescription
         ) {
             return res.status(400).json({ message: "All fields are required!" });
-        }
-
-        if (!companyAddress.addressStr || !companyAddress.country) {
-            return res.status(400).json({ message: "Incomplete address provided." });
         }
 
         const company = await Auth.findOne({ companyMail }).session(session);
@@ -43,28 +46,26 @@ export const SignUp = async (req, res) => {
                 .json({ message: "company already exists, input one that doesn't" });
         }
 
-        //checks if the frontend sets the coordinates, if not it generates them
-        if (!companyAddress.location || !companyAddress.location.coordinates) {
-            try {
-                //this calls the utility function
-                const locationPoint = await getCoordinatesFromAddress(companyAddress);
-                //Attaches the result to the address object
-                companyAddress.location = locationPoint;
-            } catch (geoError) {
-                return res
-                    .status(400)
-                    .json({ message: geoError.message || "Invalid Address" });
-            }
-        }
-
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, salt);
+
+        const companyAddress = {
+            streetNo,
+            addressStr,
+            state,
+            country,
+            postalCode,
+            location: {
+                type: "Point",
+                coordinates: [0, 0]
+            }
+        }
 
         let newCompanyData = {
             companyName,
             password: hashPassword,
             companyMail,
-            companyAddress,
+            companyAddress: companyAddress,
             productDescription,
         };
 
