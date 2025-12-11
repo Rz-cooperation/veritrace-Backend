@@ -6,6 +6,10 @@ import { transactionWrapper } from "../utils/transactionWrapper.js";
 import { getCoordinatesFromAddress } from "../utils/geocoder.js";
 import jwt from "jsonwebtoken";
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/env.js";
+import ActivityLogs from "../models/activityLogs.model.js";
+import FlourBatch from "../models/flourBatch.model.js";
+import ProductionBatch from "../models/productionBatch.model.js";
+import FraudAlert from "../models/fraudAlert.model.js"
 
 export const SignUp = async (req, res) => {
     await transactionWrapper(async (session) => {
@@ -127,3 +131,19 @@ export const signIn = async (req, res) => {
         });
     });
 };
+
+export const deleteAccount = async (req, res) => {
+    const companyId = req.auth.companyId;
+
+    //Delete all related data first
+    await FlourBatch.deleteMany({company: companyId});
+    await ProductionBatch.deleteMany({companyId: companyId});
+    await ActivityLogs.deleteMany({companyId: companyId});
+    await FraudAlert.deleteMany({companyId: companyId});
+
+    //Keeping QRScans for analytics.
+
+    await Auth.findByIdAndDelete(companyId);
+
+    return res.status(200).json({message: "Account and all data permanently deleted."})
+}

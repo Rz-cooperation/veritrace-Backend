@@ -1,5 +1,10 @@
 import ActivityLogs from "../models/activityLogs.model.js";
 import Blacklist from "../models/blacklist.model.js";
+import FlourBatch from "../models/flourBatch.model.js";
+import ProductionBatch from "../models/productionBatch.model.js";
+import Scan from "../models/qrScan.model.js";
+import FraudAlert from "../models/fraudAlert.model.js"
+
 
 //helper function to log activities, LogActivity
 
@@ -72,4 +77,80 @@ export const logout = async (req, res) => {
         return res.status(200).json({ message: "Logged out successfully" });
     }
 };
+
+//For deleteinf flourbatch
+export const deleteFlourBatch = async (req, res) => {
+    const { id } =  req.params;
+    const companyId = req.auth.companyId;
+
+    //This checks if the batch exists and belongs to this company.
+    const batch = await FlourBatch.findOne({_id: id, companyId: companyId});
+
+    if(!batch){
+        return res.status(404).json({message: "Flour batch not found"});
+    }
+    //This checks if this flour has been used in any production batch.
+    const isUsedInProduction = await ProductionBatch.exists({ flourBatchId: id});
+
+    if(isUsedInProduction) {
+        return res.status(400).json({message: "Cannot delete: This flour batch has been used in production."})
+
+    }
+    
+    //Delete
+    await batch.deleteOne();
+
+    //Log it
+    await logActivity(companyId, "DELETED_FLOUR_BATCH", `Deleted flour batch ${batch.batchNumber}`);
+
+    return res.status(200).json({message: "Flour batch deleted succesfully"});
+}
+
+
+//for deleting production batch
+export const deleteProductionBatch = async (req, res) => {
+    const { id } = req.params;
+    const companyId = req.auth.companyId;
+
+
+    //Finding the batch
+    const batch = await ProductionBatch.findOne({_id: id, companyId});
+
+    if(!batch){
+        return res.status(404).json({message: "Batch not found "});
+    }
+    //Checks if the batch has been scanned.
+    const hasScans = await Scan.exists({ batchId: id });
+    if(hasScans){
+        return res.status(400).json({
+            message: "Cannot detele: This batch has already been scanned by customers. Deleting it will invalidate thier QR codes."
+        });
+    }
+    //Delete
+    await batch.deleteOne();
+
+    //Log it
+    await logActivity(companyId, "DELETED_PRODUCTION_BATCH", `Deleted production batch ${batch.batchNumber}`);
+
+    return res.status(200).json({message: "Production batch deleted successfullly"});
+
+}
+
+
+//deleting fruadAlert...
+export const deleteFraudAlert = async (req, res) => {
+    const { id } = req.params;
+    const companyId = req.auth.companyId;
+
+    const alert = await FraudAlert.findOneAndDelete({_id: id, companyId});
+
+    if(!alert){
+        return res.status(404).json({message: "Alert not found"});
+    }
+
+    await logActivity(companyId, "DELETED_ALERT", "Removed a fraud alert from the dashboard");
+
+    return res.status(200).json({message: "Alert removed"});
+}
+
 
